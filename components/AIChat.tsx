@@ -91,7 +91,7 @@ function ChatInput({
         onKeyDown={(e) => {
           if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
-            handleSubmit(e as any)
+            handleSubmit(e as unknown as FormEvent<HTMLFormElement>)
           }
         }}
         className="mb-2 resize-none focus-visible:ring-0 min-h-[44px] border-0"

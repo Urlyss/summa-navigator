@@ -56,7 +56,24 @@ How can I assist you with this article?`
   const router = useRouter()
   const {id} = useParams()
   const content = getContent(id as string)
-  const context = {part:{id:content?.part.id!,title:content?.part.title!},treatise:{id:content?.treatise?.id!,title:content?.treatise?.title!},question:{id:content?.question?.id!,title:content?.question?.title!},article:{id:content?.article?.id!,title:content?.article?.title!}}
+  const context = content ? {
+    part: {
+      id: content.part.id,
+      title: content.part.title
+    },
+    treatise: {
+      id: content.treatise?.id ?? 1,
+      title: content.treatise?.title ?? ''
+    },
+    question: {
+      id: content.question?.id ?? 1,
+      title: content.question?.title ?? ''
+    },
+    article: {
+      id: content.article?.id ?? 1,
+      title: content.article?.title ?? ['']
+    }
+  } : null
   const [activeTab, setActiveTab] = useState("objections")
   const [isChatOpen, setIsChatOpen] = useState(chatOpen !==null && chatOpen == 'true')
   const [initialMessages, setInitialMessages] = useState<Message[]>(
@@ -176,7 +193,7 @@ How can I assist you with this article?`
           <AIChat 
             initialMessages={initialMessages}
             setInitialMessages={setInitialMessages}
-            articleContext={createInitialContext(context)}
+            articleContext={context ? createInitialContext(context) : undefined}
             welcomeMessage={welcomeMessage}
           />
         </div>

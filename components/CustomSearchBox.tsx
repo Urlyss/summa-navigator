@@ -34,7 +34,7 @@ const getContentType = (id: string): string => {
   return types[depth as keyof typeof types] || ""
 }
 
-//@ts-ignore
+//@ts-expect-error algolia doesn't have types
 function Hit({ hit }) {
   const type = getContentType(hit.id)
   return (
@@ -69,7 +69,8 @@ function SearchErrorToast() {
   const [hasShownError, setHasShownError] = useState(false)
 
   useEffect(() => {
-    const middleware = ({ instantSearchInstance }: { instantSearchInstance: any }) => {
+    //@ts-expect-error algolia doesn't have types
+    const middleware = ({ instantSearchInstance }) => {
       const handleError = (searchError: Error) => {
         setError(searchError)
       }

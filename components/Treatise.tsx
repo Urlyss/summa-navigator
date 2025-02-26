@@ -1,4 +1,3 @@
-import Link from "next/link"
 import CustomLink from "./CustomLink"
 
 type TreatiseProps = {
