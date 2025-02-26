@@ -1,9 +1,13 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Noto_Serif_Khojki } from "next/font/google"
 import "./globals.css"
+import Footer from "@/components/Footer"
+import { ThemeProvider } from "@/components/ThemeProvider"
+import { Toaster } from "sonner"
+import { Header } from "@/components/Header"
 
-const inter = Inter({ subsets: ["latin"] })
+const font = Noto_Serif_Khojki({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Summa Theologica Navigator",
@@ -17,11 +21,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <main className="container mx-auto p-4">
-          <h1 className="text-3xl font-bold mb-6">Summa Theologica Navigator</h1>
-          {children}
-        </main>
+      <body className={font.className}>
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <Header />
+            <main className="container mx-auto p-4 mb-32">
+                {children}
+            </main>
+            <Footer/>
+            <Toaster richColors  />
+          </ThemeProvider>
       </body>
     </html>
   )

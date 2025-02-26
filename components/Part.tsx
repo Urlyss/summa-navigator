@@ -1,4 +1,4 @@
-import Link from "next/link"
+import CustomLink from "./CustomLink"
 
 type PartProps = {
   id: string
@@ -14,9 +14,7 @@ export function Part({ id, title, treatises }: PartProps) {
       <ul className="space-y-2">
         {treatises.map((treatise) => (
           <li key={treatise.id}>
-            <Link href={`/Pt${id}-Tr${treatise.id}`} className="text-blue-600 hover:underline">
-              {treatise.title}
-            </Link>
+            <CustomLink title={treatise.title || title} href={`/explore/Pt${id}-Tr${treatise.id}`}/>
           </li>
         ))}
       </ul>

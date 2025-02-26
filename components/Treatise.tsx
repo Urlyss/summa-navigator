@@ -1,4 +1,5 @@
 import Link from "next/link"
+import CustomLink from "./CustomLink"
 
 type TreatiseProps = {
   partId: string
@@ -15,9 +16,7 @@ export function Treatise({ partId, treatiseId, title, questions }: TreatiseProps
       <ul className="space-y-2">
         {questions.map((question) => (
           <li key={question.id}>
-            <Link href={`/Pt${partId}-Tr${treatiseId}-Qu${question.id}`} className="text-blue-600 hover:underline">
-              {question.title}
-            </Link>
+            <CustomLink title={question.title} href={`/explore/Pt${partId}-Tr${treatiseId}-Qu${question.id}`} />
           </li>
         ))}
       </ul>
