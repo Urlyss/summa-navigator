@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -8,10 +8,10 @@ import { MessageCircle, X } from "lucide-react"
 import { AIChat } from "@/components/AIChat"
 import { Message } from "@ai-sdk/react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
-import { getContent } from "@/lib/getContent"
 import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
+import { useContent } from "@/lib/hooks/useContent"
 
 type ArticleProps = {
   title: string[]
@@ -19,27 +19,29 @@ type ArticleProps = {
   counter: string[]
   body: string[]
   replies: { id: number; text: string[] }[]
+  question: any
+  treatise: any
+  part: any
 }
 
 type ArticleContextInfo = {
-  part: { title: string, id: string }
-  treatise: { title: string, id: number }
-  question: { title: string, id: number }
-  article: { title: string[], id: number }
+  part: { title: string, original_id: string }
+  treatise: { title: string, original_id: string }
+  question: { title: string, original_id: string }
+  article: { title: string[], original_id: string }
 }
 
-const createInitialContext = (context:ArticleContextInfo) => {
+const createInitialContext = (context: ArticleContextInfo) => {
   return `Current Context:
-- Part ${context.part.id}: ${context.part.title}
-- Treatise ${context.treatise.id}: ${context.treatise.title}
-- Question ${context.question.id}: ${context.question.title}
-- Article ${context.article.id}: ${context.article.title[0]}
+- Part ${context.part.original_id}: ${context.part.title}
+- Treatise ${context.treatise.original_id}: ${context.treatise.title}
+- Question ${context.question.original_id}: ${context.question.title}
+- Article ${context.article.original_id}: ${context.article.title[0]}
 
 Please focus your responses on this specific article and its theological context and nothing more.`
 }
 
-export function Article({ title, objections, counter, body, replies }: ArticleProps) {
-
+export function Article({ title, objections, counter, body, replies, question, treatise, part }: ArticleProps) {
   const welcomeMessage = `
 Welcome! I am Thomas AI, your guide to understanding the Summa Theologica.
 I can help you:
@@ -55,32 +57,33 @@ How can I assist you with this article?`
   const chatOpen = searchParams.get('chatOpen')
   const router = useRouter()
   const {id} = useParams()
-  const content = getContent(id as string)
-  const context = content ? {
+  
+  const context = {
     part: {
-      id: content.part.id,
-      title: content.part.title
+      original_id: part.original_id,
+      title: part.title
     },
     treatise: {
-      id: content.treatise?.id ?? 1,
-      title: content.treatise?.title ?? ''
+      original_id: treatise.original_id,
+      title: treatise.title
     },
     question: {
-      id: content.question?.id ?? 1,
-      title: content.question?.title ?? ''
+      original_id: question.original_id,
+      title: question.title
     },
     article: {
-      id: content.article?.id ?? 1,
-      title: content.article?.title ?? ['']
+      original_id: id.toString().split('-')[3].slice(2),
+      title: title
     }
-  } : null
+  }
+  
   const [activeTab, setActiveTab] = useState("objections")
   const [isChatOpen, setIsChatOpen] = useState(chatOpen !==null && chatOpen == 'true')
   const [initialMessages, setInitialMessages] = useState<Message[]>(
     [{ role: "assistant", content: welcomeMessage } as Message]
   )
 
-    // Get a new searchParams string by merging the current
+  // Get a new searchParams string by merging the current
   // searchParams with a provided key/value pair
   const createQueryString = useCallback(
     (name: string, value: string) => {
@@ -94,16 +97,43 @@ How can I assist you with this article?`
   const currentId = id as string
   const [prevId, nextId] = useMemo(() => {
     const parts = currentId.split('-')
-    // Extract just the number from the article ID (e.g., "a5" -> 5)
+    // Extract just the number from the article ID (e.g., "Ar5" -> 5)
     const articleNum = parseInt(parts[3].slice(2))
     const prevArticleId = `${parts[0]}-${parts[1]}-${parts[2]}-Ar${articleNum - 1}`
     const nextArticleId = `${parts[0]}-${parts[1]}-${parts[2]}-Ar${articleNum + 1}`
     
     return [
-      getContent(prevArticleId) ? prevArticleId : null,
-      getContent(nextArticleId) ? nextArticleId : null
+      articleNum > 1 ? prevArticleId : null,
+      nextArticleId
     ]
   }, [currentId])
+
+  // Check if previous and next articles exist
+  const [prevArticleExists, setPrevArticleExists] = useState(false)
+  const [nextArticleExists, setNextArticleExists] = useState(false)
+  
+  // Fetch previous article if prevId exists
+  const { data: prevArticleData, isLoading: isPrevLoading } = useContent(
+    prevId || ""
+  )
+  
+  // Fetch next article
+  const { data: nextArticleData, isLoading: isNextLoading } = useContent(
+    nextId || ""
+  )
+  
+  // Update state based on API responses
+  useEffect(() => {
+    if (!isPrevLoading && prevArticleData && prevArticleData.article) {
+      setPrevArticleExists(true)
+    }
+  }, [prevArticleData, isPrevLoading])
+  
+  useEffect(() => {
+    if (!isNextLoading && nextArticleData && nextArticleData.article) {
+      setNextArticleExists(true)
+    }
+  }, [nextArticleData, isNextLoading])
 
   return (
     <div className="relative pb-16">
@@ -158,7 +188,7 @@ How can I assist you with this article?`
       </Tabs>
 
       <div className="mt-8 flex justify-between items-center gap-4">
-        {prevId ? (
+        {prevId && prevArticleExists ? (
             <Link className={cn(buttonVariants({ variant: "outline" }),"flex items-center gap-2")} href={`/explore/${prevId}`} prefetch>
               <ChevronLeft />
               Previous Article
@@ -167,7 +197,7 @@ How can I assist you with this article?`
           <div /> 
         )}
         
-        {nextId ? (
+        {nextId && nextArticleExists ? (
             <Link className={cn(buttonVariants({ variant: "outline" }),"flex items-center gap-2")} href={`/explore/${nextId}`} prefetch>
               Next Article
               <ChevronRight />
@@ -201,4 +231,3 @@ How can I assist you with this article?`
     </div>
   )
 }
-

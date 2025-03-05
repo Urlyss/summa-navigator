@@ -1,12 +1,11 @@
+import { Database } from "@/types/database.types"
 import CustomLink from "./CustomLink"
 
-type PartProps = {
-  id: string
-  title: string
-  treatises: { id: number; title: string }[]
+type PartProps = Database['public']['Tables']['parts']['Row'] & {
+  treatises: Database['public']['Tables']['treatises']['Row'][]
 }
 
-export function Part({ id, title, treatises }: PartProps) {
+export function Part({ id, title, treatises,original_id }: PartProps) {
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">{title}</h2>
@@ -14,7 +13,7 @@ export function Part({ id, title, treatises }: PartProps) {
       <ul className="space-y-2">
         {treatises.map((treatise) => (
           <li key={treatise.id}>
-            <CustomLink title={treatise.title || title} href={`/explore/Pt${id}-Tr${treatise.id}`}/>
+            <CustomLink title={treatise.title || title} href={`/explore/Pt${original_id}-Tr${treatise.original_id}`}/>
           </li>
         ))}
       </ul>

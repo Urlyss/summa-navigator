@@ -1,26 +1,38 @@
+'use client'
+
 import Link from "next/link"
-import { getContent } from "@/lib/getContent"
+import { useContent } from "@/lib/hooks/useContent"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "./ui/breadcrumb"
+import { Skeleton } from "./ui/skeleton"
 
 type NavigationProps = {
   currentId: string
 }
 
 export default function Navigation({ currentId }: NavigationProps) {
-  const content = getContent(currentId)
+  const { data: content, isLoading } = useContent(currentId)
+
+  if (isLoading) {
+    return <NavigationSkeleton />
+  }
 
   if (!content || content == null) {
     return null
   }
 
-  const { part, treatise, question, article } = content
+  // Extract the relevant data based on the content structure
+  const part = content.part || (content.treatise?.part) || (content.question?.part) || (content.article?.part)
+  const treatise = content.treatise || (content.question?.treatise) || (content.article?.treatise)
+  const question = content.question || (content.article?.question)
+  const article = content.article
 
+  // Create the navigation links with the correct structure
   const links = [
     { href: "/explore", label: "Home" },
-    part && { href: `/explore/Pt${part.id}`, label: part.title },
-    treatise && { href: `/explore/Pt${part.id}-Tr${treatise.id}`, label: treatise.title || part.title },
-    question && { href: `/explore/Pt${part.id}-Tr${treatise.id}-Qu${question.id}`, label: question.title },
-    article && { href: `/explore/Pt${part.id}-Tr${treatise.id}-Qu${question.id}-Ar${article.id}`, label: article.title[0] },
+    part && { href: `/explore/Pt${part.original_id}`, label: part.title },
+    treatise && { href: `/explore/Pt${part.original_id}-Tr${treatise.original_id}`, label: treatise.title },
+    question && { href: `/explore/Pt${part.original_id}-Tr${treatise.original_id}-Qu${question.original_id}`, label: question.title },
+    article && { href: `/explore/Pt${part.original_id}-Tr${treatise.original_id}-Qu${question.original_id}-Ar${article.original_id}`, label: article.title[0] },
   ].filter(Boolean)
 
   return (
@@ -45,3 +57,12 @@ export default function Navigation({ currentId }: NavigationProps) {
   )
 }
 
+function NavigationSkeleton() {
+  return (
+    <div className="flex gap-2 mb-16">
+      {[1, 2, 3].map((i) => (
+        <Skeleton key={i} className="h-6 w-24" />
+      ))}
+    </div>
+  )
+}

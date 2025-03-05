@@ -1,16 +1,21 @@
-import { getContent } from "@/lib/getContent"
+'use client'
 import Navigation from "@/components/Navigation"
 import { Part } from "@/components/Part"
 import { Treatise } from "@/components/Treatise"
 import { Question } from "@/components/Question"
 import { Article } from "@/components/Article"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useContent } from "@/lib/hooks/useContent"
 
-export const dynamic = 'force-static'
 
 export default function DynamicPage({ params }: { params: { id: string } }) {
-  const content = getContent(params.id)
+  const { data: content, isLoading, error } = useContent(params.id)
 
-  if (!content || content == null) {
+  if (isLoading) {
+    return <ContentSkeleton />
+  }
+
+  if (error || !content) {
     return (
       <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
         <strong className="font-bold">Error!</strong>
@@ -27,13 +32,31 @@ export default function DynamicPage({ params }: { params: { id: string } }) {
       {article ? (
         <Article {...article} />
       ) : question ? (
-        <Question partId={part.id} treatiseId={treatise.id} questionId={question.id} {...question} />
+        <Question {...question}  />
       ) : treatise ? (
-        <Treatise partId={part.id} treatiseId={treatise.id} title={treatise.title} questions={treatise.questions} />
+        <Treatise {...treatise} />
       ) : (
-        <Part id={part.id} title={part.title} treatises={part.treatises} />
+        <Part {...part} />
       )}
     </>
+  )
+}
+
+function ContentSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2 mb-16">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-6 w-24" />
+        ))}
+      </div>
+      <Skeleton className="h-10 w-3/4 mb-6" />
+      <div className="space-y-4">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <Skeleton key={i} className="h-4 w-full" />
+        ))}
+      </div>
+    </div>
   )
 }
 
