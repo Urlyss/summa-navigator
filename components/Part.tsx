@@ -5,7 +5,7 @@ type PartProps = Database['public']['Tables']['parts']['Row'] & {
   treatises: Database['public']['Tables']['treatises']['Row'][]
 }
 
-export function Part({ id, title, treatises,original_id }: PartProps) {
+export function Part({ title, treatises,original_id }: PartProps) {
   return (
     <div>
       <h2 className="text-2xl font-semibold mb-4">{title}</h2>

@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import { parseRouteId } from '@/lib/parseRouteId'
 
 // Helper function to handle errors
-const handleError = (error: any) => {
+const handleError = (error: unknown) => {
   console.error('Error:', error)
   return NextResponse.json({ error: 'Error fetching content' }, { status: 500 })
 }

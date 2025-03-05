@@ -12,23 +12,27 @@ import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useContent } from "@/lib/hooks/useContent"
+import { Database } from "@/types/database.types"
 
-type ArticleProps = {
-  title: string[]
-  objections: { id: number; text: string[] }[]
-  counter: string[]
-  body: string[]
-  replies: { id: number; text: string[] }[]
-  question: any
-  treatise: any
-  part: any
+type ArticleProps = Database["public"]["Tables"]["articles"]["Row"] & {
+  objections:{
+    id: number;
+    text: string[];
+}[],
+replies:{
+  id: number;
+  text: string[];
+}[],
+  question: Database["public"]["Tables"]["questions"]["Row"]
+  treatise: Database["public"]["Tables"]["treatises"]["Row"]
+  part: Database["public"]["Tables"]["parts"]["Row"]
 }
 
 type ArticleContextInfo = {
   part: { title: string, original_id: string }
-  treatise: { title: string, original_id: string }
-  question: { title: string, original_id: string }
-  article: { title: string[], original_id: string }
+  treatise: { title: string, original_id: number }
+  question: { title: string, original_id: number }
+  article: { title: string[], original_id: number }
 }
 
 const createInitialContext = (context: ArticleContextInfo) => {
@@ -72,7 +76,7 @@ How can I assist you with this article?`
       title: question.title
     },
     article: {
-      original_id: id.toString().split('-')[3].slice(2),
+      original_id: parseInt(id.toString().split('-')[3].slice(2)),
       title: title
     }
   }
