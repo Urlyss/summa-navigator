@@ -8,6 +8,7 @@ export const systemMessages = {
 
 export const availableModels = [
     { label: "DeepSeek V3", value: "deepseek/deepseek-chat:free" },
+    { label: "Gemma 3 27B", value: "google/gemma-3-27b-it:free" },
     { label: "Mistral Small 3", value: "mistralai/mistral-small-24b-instruct-2501:free" },
     { label: "R1 Distill Llama 70B", value: "deepseek/deepseek-r1-distill-llama-70b:free" },
     { label: "Gemini 2.0 Flash Thinking Experimental 01-21", value: "google/gemini-2.0-flash-thinking-exp:free" },

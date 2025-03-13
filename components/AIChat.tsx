@@ -6,18 +6,20 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Loader2, Send, Square, Trash } from "lucide-react"
+import { Send, Square } from "lucide-react"
 import ReactMarkdown from 'react-markdown'
 import { availableModels, aiModes } from "@/ai_config"
 import { useChat } from "@ai-sdk/react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion"
+import { TextDotsLoader } from "./ui/text-dots-loader"
+import { Markdown } from "./ui/markdown"
 
 function ChatReasoning({ parts, isLoading }: { parts: Message['parts'], isLoading: boolean }) {
   return (
-    <div className="bg-muted p-2 rounded-lg">
+    <div className="bg-muted p-2 rounded-lg text-xs">
       <div className="flex items-center gap-2 text-muted-foreground">
-        {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-        <span>Reasoning</span>
+        {isLoading && <TextDotsLoader size="sm" text="Reasoning"/>}
+        {!isLoading && <div className="font-medium">Reasoned for a few seconds</div>}
       </div>
       <Accordion type="single" collapsible>
         {parts && parts.map((part, index) => part.type === "reasoning" && (
@@ -41,15 +43,14 @@ function ChatReasoning({ parts, isLoading }: { parts: Message['parts'], isLoadin
 
 function ChatMessage({ message, isLoading }: { message: Message, isLoading: boolean }) {
   const hasReasoning = message.parts && message.parts.filter(part => part.type === "reasoning").length > 0
-
   return (
     <div className={`mb-2 flex flex-col gap-4 ${message.role === "user" ? "text-right" : "text-left"}`}>
       {hasReasoning && <ChatReasoning parts={message.parts} isLoading={isLoading} />}
       <div>
-        <span className={`inline-block p-2 rounded-lg ${
-          message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted"
+        <span className={`inline-block p-2 rounded-lg text-sm ${
+          message.role === "user" && "bg-primary text-primary-foreground" 
         }`}>
-          <ReactMarkdown>{message.content}</ReactMarkdown>
+          <Markdown>{message.content}</Markdown>
         </span>
       </div>
     </div>
@@ -66,7 +67,6 @@ function ChatInput({
   handleSubmit,
   setModel,
   setAiMode,
-  resetChat,
   stop
 }: {
   input: string
@@ -78,14 +78,13 @@ function ChatInput({
   handleSubmit: (e: FormEvent<HTMLFormElement>) => void
   setModel: (value: string) => void
   setAiMode: (value: string) => void
-  resetChat: () => void
   stop: () => void
 }) {
   return (
-    <form onSubmit={handleSubmit} className="p-4 border-t">
+    <form onSubmit={handleSubmit} className="border-input bg-background rounded-3xl border p-2 shadow-xs">
       <Textarea
         ref={textareaRef}
-        placeholder="Message..."
+        placeholder="Ask me anything..."
         value={input}
         onChange={handleInputChange}
         onKeyDown={(e) => {
@@ -94,15 +93,12 @@ function ChatInput({
             handleSubmit(e as unknown as FormEvent<HTMLFormElement>)
           }
         }}
-        className="mb-2 resize-none focus-visible:ring-0 min-h-[44px] border-0"
+        className="text-primary min-h-[44px] w-full resize-none border-none bg-transparent shadow-none outline-none focus-visible:ring-0 focus-visible:ring-offset-0"
       />
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex gap-2 flex-1">
-          <Button size="icon" className="rounded-sm bg-destructive" onClick={resetChat}>
-            <Trash className="h-4 w-4 text-destructive-foreground" />
-          </Button>
+      <div className="flex items-end justify-between gap-2">
+        <div className="flex gap-2 flex-1 items-end">
           <Select value={model} onValueChange={setModel}>
-            <SelectTrigger className="w-32 text-xs overflow-hidden">
+            <SelectTrigger className="w-24 h-8 text-xs overflow-hidden text-ellipsis">
               <SelectValue placeholder="Select a model" />
             </SelectTrigger>
             <SelectContent>
@@ -114,7 +110,7 @@ function ChatInput({
             </SelectContent>
           </Select>
           <Select value={aiMode} onValueChange={setAiMode}>
-            <SelectTrigger className="w-32 text-xs overflow-hidden">
+            <SelectTrigger className="w-24 h-8 text-xs overflow-hidden">
               <SelectValue placeholder="Select AI mode" />
             </SelectTrigger>
             <SelectContent>
@@ -126,7 +122,7 @@ function ChatInput({
             </SelectContent>
           </Select>
         </div>
-        <Button type="submit" size="icon" className="rounded-full" onClick={isLoading ? stop : undefined}>
+        <Button type="submit" size="icon" className="w-8 h-8 rounded-full" onClick={isLoading ? stop : undefined}>
           {isLoading ? <Square className="h-4 w-4" /> : <Send className="h-4 w-4" />}
         </Button>
       </div>
@@ -151,7 +147,7 @@ export function AIChat({
   const endOfMessagesRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const { messages, input, handleInputChange, handleSubmit, status, stop, setMessages, error, reload } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, status, stop, setMessages, error, reload,setInput } = useChat({
     maxSteps: 5,
     body: { aiMode, model, articleContext }
   })
@@ -177,33 +173,57 @@ export function AIChat({
     setInitialMessages(initMessage)
   }
 
+  useEffect(() => {
+    if(messages.length > initialMessages.length){
+      resetChat()
+    }
+  }, [initialMessages])
+  
+  const message = messages[messages.length-1]
+  const hasReasoning = message && message.parts && message.parts.filter(part => part.type === "reasoning").length > 0
+  const suggestedActions = ["Explain this article to me.", "What is the main idea of this article?", "What is the conclusion of this article?", "What are the key points of this article?"]
+
   return (
-    <div className="flex flex-col h-full bg-background prose dark:prose-invert prose-sm">
-      <h3 className="text-lg font-semibold mb-2 p-4 border-b">Thomas AI</h3>
+    <div className="flex flex-col w-full h-[75vh] md:h-[80dvh] bg-background ">
       <ScrollArea className="flex-grow mb-4 max-w-none" ref={scrollAreaRef}>
-        <div className="p-4">
-          {messages?.map((message, index) => (
-            <ChatMessage key={index} message={message} isLoading={isLoading} />
-          ))}
+          <div className="flex flex-col min-w-0 gap-6 flex-1 pr-4">
+            {messages?.map((message, index) => (
+              <ChatMessage key={index} message={message} isLoading={isLoading} />
+            ))}
           {error && (
-            <>
-              <div>An error occurred.</div>
-              <Button variant="link" onClick={()=>reload()} className="flex gap-2 items-center text-destructive">
+            <div className="text-xs space-y-2">
+              <div className="text-destructive">An error occurred.</div>
+              <Button variant="destructive" size="sm" onClick={()=>reload()}>
                 Retry
               </Button>
-            </>
+            </div>
           )}
-          {isLoading && (
+          {isLoading && !hasReasoning && (
             <div>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Thinking...</span>
+                <TextDotsLoader size="sm"/>
               </div>
             </div>
           )}
-          <div ref={endOfMessagesRef} />
+            <div ref={endOfMessagesRef} className="shrink-0 min-w-[24px] min-h-[24px]"
+      />
         </div>
       </ScrollArea>
+      <div className="grid grid-cols-2 gap-2 w-full my-2 ">
+      {suggestedActions.map((suggestedAction, index) => (
+          <Button
+            key={index}
+            variant="ghost"
+            onClick={async () => {setInput(suggestedAction)}}
+            size="sm"
+            className="text-left border rounded-xl p-2 text-xs flex-1 gap-1 sm:flex-col w-full h-auto justify-start items-start"
+          >
+            <span className="text-muted-foreground">
+              {suggestedAction}
+            </span>
+          </Button>
+      ))}
+    </div>
       <ChatInput
         input={input}
         isLoading={isLoading}
@@ -214,7 +234,6 @@ export function AIChat({
         handleSubmit={handleSubmit}
         setModel={setModel}
         setAiMode={setAiMode}
-        resetChat={resetChat}
         stop={stop}
       />
     </div>

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { MessageCircle, X } from "lucide-react"
+import { MessageCircle, MessageCirclePlus } from "lucide-react"
 import { AIChat } from "@/components/AIChat"
 import { Message } from "@ai-sdk/react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
@@ -13,6 +13,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useContent } from "@/lib/hooks/useContent"
 import { Database } from "@/types/database.types"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
 
 type ArticleProps = Database["public"]["Tables"]["articles"]["Row"] & {
   objections:{
@@ -80,12 +81,12 @@ How can I assist you with this article?`
       title: title
     }
   }
+ 
   
+  const initMsg = [{ role: "assistant", content: welcomeMessage } as Message]
   const [activeTab, setActiveTab] = useState("objections")
   const [isChatOpen, setIsChatOpen] = useState(chatOpen !==null && chatOpen == 'true')
-  const [initialMessages, setInitialMessages] = useState<Message[]>(
-    [{ role: "assistant", content: welcomeMessage } as Message]
-  )
+  const [initialMessages, setInitialMessages] = useState<Message[]>(initMsg)
 
   // Get a new searchParams string by merging the current
   // searchParams with a provided key/value pair
@@ -139,6 +140,15 @@ How can I assist you with this article?`
     }
   }, [nextArticleData, isNextLoading])
 
+  useEffect(() => {
+    if(isChatOpen) {
+      router.push(pathname + '?' + createQueryString('chatOpen', 'true'))
+    } else {
+      router.push(pathname)
+    }
+  }, [isChatOpen])
+  
+
   return (
     <div className="relative pb-16">
       <h2 className="text-2xl font-semibold mb-4">{title[0]}</h2>
@@ -179,7 +189,7 @@ How can I assist you with this article?`
         </TabsContent>
         <TabsContent value="replies" className="space-y-10">
           {replies.map((reply,ind) => (
-            <div key={reply.id} className={cn("pb-2",ind < objections.length-1 && "border-b-2")}>
+            <div key={reply.id} className={cn("pb-2",ind < replies.length-1 && "border-b-2")}>
               <h4 className="font-semibold">Reply to Objection {reply.id}</h4>
               {reply.text.map((paragraph, index) => (
                 <p key={index} className="mb-2">
@@ -211,27 +221,33 @@ How can I assist you with this article?`
         )}
       </div>
 
-      <Button className="z-50 fixed bottom-20 right-4 rounded-full w-12 h-12 p-0" onClick={() => {
-        if(isChatOpen) {
-          router.push(pathname)
-        } else {
-          router.push(pathname + '?' + createQueryString('chatOpen', `${!isChatOpen}`))
-        }
-        setIsChatOpen(!isChatOpen)
-        }}>
-        {isChatOpen ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
-      </Button>
-
-      {isChatOpen && (
-        <div className="fixed bottom-36 right-4 w-1/4 h-4/6 rounded-lg shadow-lg flex flex-col overflow-hidden">
-          <AIChat 
+      <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+      <DialogTrigger asChild>
+        <Button className="z-50 fixed bottom-20 right-4 rounded-full w-12 h-12 p-0" onClick={() => {setIsChatOpen(true)}}>
+          <MessageCircle className="h-6 w-6" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="w-[90vw] p-2 md:p-6">
+        <DialogHeader>
+          <DialogTitle>Thomas AI</DialogTitle>
+          <DialogDescription>
+            <Button className="rounded-sm gap-2" size="sm" onClick={()=>{setInitialMessages(initMsg)}}>
+              New Chat<MessageCirclePlus className="h-4 w-4" />
+            </Button>
+          </DialogDescription>
+        </DialogHeader>
+        <AIChat 
             initialMessages={initialMessages}
             setInitialMessages={setInitialMessages}
             articleContext={context ? createInitialContext(context) : undefined}
             welcomeMessage={welcomeMessage}
-          />
-        </div>
-      )}
+          />  
+      </DialogContent>
+    </Dialog>
+
+      
+
+      
     </div>
   )
 }
