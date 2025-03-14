@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Loader2, MessageCircle, MessageCirclePlus } from "lucide-react"
 import { AIChat } from "@/components/AIChat"
 import { Message } from "@ai-sdk/react"
