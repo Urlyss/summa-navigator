@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { MessageCircle, MessageCirclePlus } from "lucide-react"
+import { Loader2, MessageCircle, MessageCirclePlus } from "lucide-react"
 import { AIChat } from "@/components/AIChat"
 import { Message } from "@ai-sdk/react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
@@ -202,23 +202,19 @@ How can I assist you with this article?`
       </Tabs>
 
       <div className="mt-8 flex justify-between items-center gap-4">
-        {prevId && prevArticleExists ? (
-            <Link className={cn(buttonVariants({ variant: "outline" }),"flex items-center gap-2")} href={`/explore/${prevId}`} prefetch>
-              <ChevronLeft />
+          <Button variant={"outline"} disabled={!prevId || !prevArticleExists}>
+            <Link className={"flex items-center gap-2"} href={`/explore/${prevId}`} prefetch>
+              {isPrevLoading ? <Loader2 className="animate-spin w-4 h-4"/> : <ChevronLeft />}
               Previous Article
             </Link>
-        ) : (
-          <div /> 
-        )}
+          </Button>
         
-        {nextId && nextArticleExists ? (
-            <Link className={cn(buttonVariants({ variant: "outline" }),"flex items-center gap-2")} href={`/explore/${nextId}`} prefetch>
+          <Button variant={"outline"} disabled={!nextId || !nextArticleExists}>
+            <Link className={"flex items-center gap-2"} href={`/explore/${nextId}`} prefetch>
               Next Article
-              <ChevronRight />
+              {isNextLoading ? <Loader2 className="animate-spin w-4 h-4"/> : <ChevronRight />}
             </Link>
-        ) : (
-          <div /> 
-        )}
+          </Button>
       </div>
 
       <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>

@@ -209,7 +209,7 @@ export function AIChat({
       />
         </div>
       </ScrollArea>
-      <div className="grid grid-cols-2 gap-2 w-full my-2 ">
+      {messages.length ==1 && <div className="grid grid-cols-2 gap-2 w-full my-2 ">
       {suggestedActions.map((suggestedAction, index) => (
           <Button
             key={index}
@@ -223,7 +223,7 @@ export function AIChat({
             </span>
           </Button>
       ))}
-    </div>
+    </div>}
       <ChatInput
         input={input}
         isLoading={isLoading}
