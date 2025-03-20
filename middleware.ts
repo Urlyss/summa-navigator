@@ -2,32 +2,33 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith('/api/chat')) {
-    const referer = request.headers.get('referer')
-    const origin = request.headers.get('origin')
+  // Get the origin and referer
+  const referer = request.headers.get('referer')
+  const origin = request.headers.get('origin')
+  const host = request.headers.get('host')
+  
+  // List of allowed origins that don't need API key
+  const sameOriginSources = [host]
+
+  // Check if request is from the same origin
+  const isSameOrigin = sameOriginSources.some(url => 
+    url && (referer?.includes(url) || origin?.includes(url))
+  )
+
+  // If it's an API request and not from the same origin, verify API key
+  if (request.nextUrl.pathname.startsWith('/api/') && !isSameOrigin) {
+    // API Key validation for external requests
+    const apiKey = request.headers.get('x-api-key')
     
-    // List of allowed origins
-    const allowedOrigins = [
-      process.env.NEXT_PUBLIC_APP_URL,
-      process.env.NEXT_PUBLIC_MOBILE_APP_URL,
-      // Add development Expo URLs
-      'exp://',
-      'localhost'
-    ]
-
-    const isAllowedOrigin = allowedOrigins.some(url => 
-        url && referer?.includes(url) || url && origin?.includes(url)
-    )
-
-    if (!isAllowedOrigin) {
+    if (!apiKey || apiKey !== process.env.API_KEY) {
       return new NextResponse(
-        JSON.stringify({ error: 'Unauthorized' }),
+        JSON.stringify({ error: 'Unauthorized: Invalid API Key' }),
         { 
-          status: 401,
+          status: 401, 
           headers: { 
             'content-type': 'application/json',
             'Access-Control-Allow-Origin': '*' // Only during development
-          }
+          } 
         }
       )
     }
