@@ -5,14 +5,25 @@ import { Message } from 'ai/react'
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Send, Square } from "lucide-react"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Send, Square, RefreshCw } from "lucide-react"
 import ReactMarkdown from 'react-markdown'
-import { availableModels, aiModes } from "@/ai_config"
+import { aiModes } from "@/ai_config"
 import { useChat } from "@ai-sdk/react"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "./ui/accordion"
 import { TextDotsLoader } from "./ui/text-dots-loader"
 import { Markdown } from "./ui/markdown"
+import { useQuery } from '@tanstack/react-query'
+
+// Function to fetch models from API
+const fetchModels = async () => {
+  const response = await fetch('/api/models')
+  if (!response.ok) {
+    throw new Error('Failed to fetch models')
+  }
+  const data = await response.json()
+  return data
+}
 
 function ChatReasoning({ parts, isLoading }: { parts: Message['parts'], isLoading: boolean }) {
   return (
@@ -67,7 +78,10 @@ function ChatInput({
   handleSubmit,
   setModel,
   setAiMode,
-  stop
+  stop,
+  availableModels,
+  isModelsLoading,
+  refetchModels
 }: {
   input: string
   isLoading: boolean
@@ -79,6 +93,9 @@ function ChatInput({
   setModel: (value: string) => void
   setAiMode: (value: string) => void
   stop: () => void
+  availableModels: {label:string,value:string}[]
+  isModelsLoading: boolean
+  refetchModels: () => void
 }) {
   return (
     <form onSubmit={handleSubmit} className="border-input bg-background rounded-3xl border p-2 shadow-xs">
@@ -97,16 +114,43 @@ function ChatInput({
       />
       <div className="flex items-end justify-between gap-2">
         <div className="flex gap-2 flex-1 items-end">
-          <Select value={model} onValueChange={setModel}>
-            <SelectTrigger className="w-24 h-8 text-xs overflow-hidden text-ellipsis">
-              <SelectValue placeholder="Select a model" />
+          <Select 
+            value={!isModelsLoading ? model : undefined}
+            onValueChange={setModel} 
+            disabled={isModelsLoading}
+          >
+            <SelectTrigger className="w-32 h-8 text-xs overflow-hidden text-ellipsis">
+              <SelectValue placeholder={isModelsLoading ? "Loading..." : "Select a model"} />
             </SelectTrigger>
             <SelectContent>
-              {availableModels.map((model) => (
-                <SelectItem key={model.value} value={model.value} className="text-xs">
-                  {model.label}
+              <SelectGroup className="overflow-y-auto max-h-80">
+              <SelectLabel>Models</SelectLabel>
+              {isModelsLoading ? (
+                <SelectItem value="loading" disabled className="text-xs">
+                  Loading models...
                 </SelectItem>
-              ))}
+              ) : (
+                <>
+                  {availableModels.map((model) => (
+                    <SelectItem key={model.value} value={model.value} className="text-xs">
+                      {model.label}
+                    </SelectItem>
+                  ))}
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full mt-1 flex items-center gap-1 text-xs"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      refetchModels()
+                    }}
+                  >
+                    <RefreshCw className="h-3 w-3" />
+                    Refresh models
+                  </Button>
+                </>
+              )}
+              </SelectGroup>
             </SelectContent>
           </Select>
           <Select value={aiMode} onValueChange={setAiMode}>
@@ -141,13 +185,38 @@ export function AIChat({
   articleContext?: string
   welcomeMessage?: string
 }) {
-  const [model, setModel] = useState<string>(availableModels[0].value)
+  // Fetch models using React Query
+  const { 
+    data: availableModels = [], 
+    isLoading: isModelsLoading,
+    refetch: refetchModels,
+    error: modelsError
+  } = useQuery({
+    queryKey: ['models'],
+    queryFn: fetchModels,
+    staleTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+  })
+
+  // Default to first model or fallback to a safe default
+  const defaultModel = availableModels.length > 0 
+    ? availableModels[0].value 
+    : "deepseek/deepseek-chat:free"
+  
+  const [model, setModel] = useState<string>(defaultModel)
   const [aiMode, setAiMode] = useState(aiModes[0].value)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
   const endOfMessagesRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  const { messages, input, handleInputChange, handleSubmit, status, stop, setMessages, error, reload,setInput } = useChat({
+  // Update model when availableModels loads
+  useEffect(() => {
+    if (availableModels.length > 0) {
+      setModel(availableModels[0].value)
+    }
+  }, [availableModels])
+
+  const { messages, input, handleInputChange, handleSubmit, status, stop, setMessages, error, reload, setInput } = useChat({
     maxSteps: 5,
     body: { aiMode, model, articleContext }
   })
@@ -190,40 +259,43 @@ export function AIChat({
             {messages?.map((message, index) => (
               <ChatMessage key={index} message={message} isLoading={isLoading} />
             ))}
-          {error && (
-            <div className="text-xs space-y-2">
-              <div className="text-destructive">An error occurred.</div>
-              <Button variant="destructive" size="sm" onClick={()=>reload()}>
-                Retry
-              </Button>
-            </div>
-          )}
-          {isLoading && !hasReasoning && (
-            <div>
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <TextDotsLoader size="sm"/>
+            {(error || modelsError) && (
+              <div className="text-xs space-y-2">
+                <div className="text-destructive">
+                  {modelsError ? "Failed to load models. Using default model." : "An error occurred."}
+                </div>
+                <Button variant="destructive" size="sm" onClick={()=>reload()}>
+                  Retry
+                </Button>
               </div>
-            </div>
-          )}
-            <div ref={endOfMessagesRef} className="shrink-0 min-w-[24px] min-h-[24px]"
-      />
-        </div>
+            )}
+            {isLoading && !hasReasoning && (
+              <div>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <TextDotsLoader size="sm"/>
+                </div>
+              </div>
+            )}
+            <div ref={endOfMessagesRef} className="shrink-0 min-w-[24px] min-h-[24px]" />
+          </div>
       </ScrollArea>
-      {messages.length ==1 && <div className="grid grid-cols-2 gap-2 w-full my-2 ">
-      {suggestedActions.map((suggestedAction, index) => (
-          <Button
-            key={index}
-            variant="ghost"
-            onClick={async () => {setInput(suggestedAction)}}
-            size="sm"
-            className="text-left border rounded-xl p-2 text-xs flex-1 gap-1 sm:flex-col w-full h-auto justify-start items-start"
-          >
-            <span className="text-muted-foreground">
-              {suggestedAction}
-            </span>
-          </Button>
-      ))}
-    </div>}
+      {messages.length == 1 && (
+        <div className="grid grid-cols-2 gap-2 w-full my-2 ">
+          {suggestedActions.map((suggestedAction, index) => (
+            <Button
+              key={index}
+              variant="ghost"
+              onClick={async () => {setInput(suggestedAction)}}
+              size="sm"
+              className="text-left border rounded-xl p-2 text-xs flex-1 gap-1 sm:flex-col w-full h-auto justify-start items-start"
+            >
+              <span className="text-muted-foreground">
+                {suggestedAction}
+              </span>
+            </Button>
+          ))}
+        </div>
+      )}
       <ChatInput
         input={input}
         isLoading={isLoading}
@@ -235,6 +307,9 @@ export function AIChat({
         setModel={setModel}
         setAiMode={setAiMode}
         stop={stop}
+        availableModels={availableModels}
+        isModelsLoading={isModelsLoading}
+        refetchModels={refetchModels}
       />
     </div>
   )
