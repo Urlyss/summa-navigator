@@ -21,7 +21,7 @@ export async function GET() {
   let models = defaultModels
   try {
     // Try to get models from Redis
-    let modelList = await redis.json.get('free-models')
+    const modelList = await redis.json.get('free-models')
     models = modelList ? Object.values(modelList) : []
     return NextResponse.json(models)
   } catch (error) {
