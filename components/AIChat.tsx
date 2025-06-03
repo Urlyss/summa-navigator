@@ -131,7 +131,7 @@ function ChatInput({
                 </SelectItem>
               ) : (
                 <>
-                  {availableModels.map((model) => (
+                  {availableModels?.map((model) => (
                     <SelectItem key={model.value} value={model.value} className="text-xs">
                       {model.label}
                     </SelectItem>
