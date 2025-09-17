@@ -5,8 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
 import { Loader2, MessageCircle, MessageCirclePlus } from "lucide-react"
-import { AIChat } from "@/components/AIChat"
-import { Message } from "@ai-sdk/react"
+import { UIMessage } from "@ai-sdk/react"
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight } from "lucide-react"
@@ -14,6 +13,7 @@ import Link from "next/link"
 import { useContent } from "@/lib/hooks/useContent"
 import { Database } from "@/types/database.types"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
+import ChatBot from "./Chatbot"
 
 type ArticleProps = Database["public"]["Tables"]["articles"]["Row"] & {
   objections:{
@@ -83,10 +83,10 @@ How can I assist you with this article?`
   }
  
   
-  const initMsg = [{ role: "assistant", content: welcomeMessage } as Message]
+  const initMsg = [{ role: "assistant", parts: [{ type: "text", text: welcomeMessage }] }] as UIMessage[]
   const [activeTab, setActiveTab] = useState("objections")
   const [isChatOpen, setIsChatOpen] = useState(chatOpen !==null && chatOpen == 'true')
-  const [initialMessages, setInitialMessages] = useState<Message[]>(initMsg)
+  const [initialMessages, setInitialMessages] = useState<UIMessage[]>(initMsg)
 
   // Get a new searchParams string by merging the current
   // searchParams with a provided key/value pair
@@ -223,8 +223,8 @@ How can I assist you with this article?`
           <MessageCircle className="h-6 w-6" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[90vw] p-2 md:p-6">
-        <DialogHeader>
+      <DialogContent className="w-[90vw] p-2">
+        <DialogHeader className="px-6">
           <DialogTitle>Thomas AI</DialogTitle>
           <DialogDescription>
             <Button className="rounded-sm gap-2" size="sm" onClick={()=>{setInitialMessages(initMsg)}}>
@@ -232,11 +232,9 @@ How can I assist you with this article?`
             </Button>
           </DialogDescription>
         </DialogHeader>
-        <AIChat 
+        <ChatBot 
             initialMessages={initialMessages}
-            setInitialMessages={setInitialMessages}
             articleContext={context ? createInitialContext(context) : undefined}
-            welcomeMessage={welcomeMessage}
           />  
       </DialogContent>
     </Dialog>

@@ -1,6 +1,6 @@
 import { systemMessages } from '@/ai_config';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
-import { streamText } from 'ai';
+import { convertToModelMessages, streamText } from 'ai';
 import { headers } from 'next/headers'
 
 export const maxDuration = 30;
@@ -31,10 +31,10 @@ export async function POST(req: Request) {
         const result = streamText({
             model: openrouter.chat(selectedModel),
             system: `${selectedSystem}\n${articleContext}`,
-            messages
+            messages:convertToModelMessages(messages),
         });
         
-        return result.toDataStreamResponse({sendReasoning: true});
+        return result.toUIMessageStreamResponse({sendReasoning: true});
     } catch (error) {
         console.error(error)
         return new Response('Internal Server Error', { status: 500 })
