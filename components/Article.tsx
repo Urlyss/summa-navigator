@@ -12,7 +12,6 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useContent } from "@/lib/hooks/useContent"
 import { Database } from "@/types/database.types"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
 import ChatBot from "./Chatbot"
 import { ResponsiveDialog } from "./ui/responsive-dialog"
 
