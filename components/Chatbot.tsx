@@ -176,6 +176,7 @@ const ChatBot = ({
         <Suggestions className="grid grid-cols-2 gap-2 w-full my-2 ">
           {suggestions.map((suggestion) => (
             <Suggestion
+            className="text-wrap p-6"
               key={suggestion}
               onClick={async () => {
                 setInput(suggestion);

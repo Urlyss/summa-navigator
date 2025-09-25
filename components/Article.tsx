@@ -14,6 +14,7 @@ import { useContent } from "@/lib/hooks/useContent"
 import { Database } from "@/types/database.types"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog"
 import ChatBot from "./Chatbot"
+import { ResponsiveDialog } from "./ui/responsive-dialog"
 
 type ArticleProps = Database["public"]["Tables"]["articles"]["Row"] & {
   objections:{
@@ -50,11 +51,11 @@ export function Article({ title, objections, counter, body, replies, question, t
   const welcomeMessage = `
 Welcome! I am Thomas AI, your guide to understanding the Summa Theologica.
 I can help you:
-* Understand complex theological concepts
-* Explain the structure of arguments
-* Provide historical context
-* Connect ideas across different parts of the Summa
-* Answer questions about specific articles
++ Understand complex theological concepts
++ Explain the structure of arguments
++ Provide historical context
++ Connect ideas across different parts of the Summa
++ Answer questions about specific articles
 How can I assist you with this article?`
 
   const searchParams = useSearchParams()
@@ -217,31 +218,19 @@ How can I assist you with this article?`
           </Button>
       </div>
 
-      <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
-      <DialogTrigger asChild>
-        <Button className="z-50 fixed bottom-20 right-4 rounded-full w-12 h-12 p-0" onClick={() => {setIsChatOpen(true)}}>
-          <MessageCircle className="h-6 w-6" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="w-[90vw] p-2">
-        <DialogHeader className="px-6">
-          <DialogTitle>Thomas AI</DialogTitle>
-          <DialogDescription>
-            <Button className="rounded-sm gap-2" size="sm" onClick={()=>{setInitialMessages(initMsg)}}>
-              New Chat<MessageCirclePlus className="h-4 w-4" />
-            </Button>
-          </DialogDescription>
-        </DialogHeader>
-        <ChatBot 
-            initialMessages={initialMessages}
-            articleContext={context ? createInitialContext(context) : undefined}
-          />  
-      </DialogContent>
-    </Dialog>
-
-      
-
-      
+<ResponsiveDialog 
+  open={isChatOpen} 
+  setOpen={setIsChatOpen} 
+  trigger={<Button className="z-50 fixed bottom-20 right-4 rounded-full w-12 h-12 p-0" onClick={() => {setIsChatOpen(true)}}>
+              <MessageCircle className="h-6 w-6" />
+            </Button>} 
+  title="Thomas AI" 
+  description={<Button className="rounded-sm gap-2" size="sm" onClick={()=>{setInitialMessages(initMsg)}}>
+                  New Chat<MessageCirclePlus className="h-4 w-4" />
+                </Button>} 
+  body={<ChatBot
+          initialMessages={initialMessages}
+          articleContext={context ? createInitialContext(context) : undefined}/>  } />
     </div>
   )
 }
