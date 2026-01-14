@@ -13,7 +13,7 @@ export function Treatise({ title, questions,part,original_id }: TreatiseProps) {
       <h3 className="text-xl font-semibold mb-2">Questions</h3>
       <ul className="space-y-2">
         {questions.map((question) => (
-          <li key={question.id}>
+          <li key={question._id}>
             <CustomLink title={question.title} href={`/explore/Pt${part.original_id}-Tr${original_id}-Qu${question.original_id}`} />
           </li>
         ))}

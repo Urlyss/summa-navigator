@@ -34,7 +34,7 @@ export default function Home() {
       <h2 className="text-2xl font-semibold mb-4">Parts of Summa Theologica</h2>
       <ul className="space-y-2">
         {data && Array.isArray(data) && data.map((part: Doc<"parts">) => (
-          <li key={part.id}>
+          <li key={part._id}>
             <CustomLink title={part.title} href={`/explore/Pt${part.original_id}`}/>
           </li>
         ))}

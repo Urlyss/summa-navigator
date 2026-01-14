@@ -12,7 +12,7 @@ export function Part({ title, treatises,original_id }: PartProps) {
       <h3 className="text-xl font-semibold mb-2">Treatises</h3>
       <ul className="space-y-2">
         {treatises.map((treatise) => (
-          <li key={treatise.id}>
+          <li key={treatise._id}>
             <CustomLink title={treatise.title || title} href={`/explore/Pt${original_id}-Tr${treatise.original_id}`}/>
           </li>
         ))}
