@@ -11,29 +11,26 @@ import { cn } from "@/lib/utils"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import Link from "next/link"
 import { useContent } from "@/lib/hooks/useContent"
-import { Database } from "@/types/database.types"
+import type { Doc } from "../convex/_generated/dataModel"
 import ChatBot from "./Chatbot"
 import { ResponsiveDialog } from "./ui/responsive-dialog"
 
-type ArticleProps = Database["public"]["Tables"]["articles"]["Row"] & {
-  objections:{
-    id: number;
-    text: string[];
-}[],
-replies:{
-  id: number;
-  text: string[];
-}[],
-  question: Database["public"]["Tables"]["questions"]["Row"]
-  treatise: Database["public"]["Tables"]["treatises"]["Row"]
-  part: Database["public"]["Tables"]["parts"]["Row"]
+type ArticleProps = Doc<"articles"> & {
+  question: Doc<"questions">
+  treatise: Doc<"treatises">
+  part: Doc<"parts">
+}
+
+type TitleAndOriginalId = {
+  title: string
+  original_id: number | string
 }
 
 type ArticleContextInfo = {
-  part: { title: string, original_id: string }
-  treatise: { title: string, original_id: number }
-  question: { title: string, original_id: number }
-  article: { title: string[], original_id: number }
+  part: TitleAndOriginalId
+  treatise: TitleAndOriginalId
+  question: TitleAndOriginalId
+  article: TitleAndOriginalId
 }
 
 const createInitialContext = (context: ArticleContextInfo) => {
@@ -41,7 +38,7 @@ const createInitialContext = (context: ArticleContextInfo) => {
 - Part ${context.part.original_id}: ${context.part.title}
 - Treatise ${context.treatise.original_id}: ${context.treatise.title}
 - Question ${context.question.original_id}: ${context.question.title}
-- Article ${context.article.original_id}: ${context.article.title[0]}
+- Article ${context.article.original_id}: ${context.article.title}
 
 Please focus your responses on this specific article and its theological context and nothing more.`
 }
@@ -151,7 +148,7 @@ How can I assist you with this article?`
 
   return (
     <div className="relative pb-16">
-      <h2 className="text-2xl font-semibold mb-4">{title[0]}</h2>
+      <h2 className="text-2xl font-semibold mb-4">{title}</h2>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">

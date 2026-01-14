@@ -1,6 +1,7 @@
-import { supabase } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { parseRouteId } from '@/lib/parseRouteId'
+import { api } from '../../../../convex/_generated/api'
+import { getConvexServerClient } from '@/lib/convexServer'
 
 // Helper function to handle errors
 const handleError = (error: unknown) => {
@@ -8,58 +9,15 @@ const handleError = (error: unknown) => {
   return NextResponse.json({ error: 'Error fetching content' }, { status: 500 })
 }
 
-// Helper function to get part by original_id
-async function getPartByOriginalId(originalId: string) {
-  const { data, error } = await supabase
-    .from('parts')
-    .select('*')
-    .eq('original_id', originalId)
-    .single()
-  
-  if (error) throw error
-  return data
-}
-
-// Helper function to get treatise by original_id and part_id
-async function getTreatiseByOriginalId(originalId: number, partId: number) {
-  const { data, error } = await supabase
-    .from('treatises')
-    .select('*')
-    .eq('original_id', originalId)
-    .eq('part_id', partId)
-    .single()
-  
-  if (error) throw error
-  return data
-}
-
-// Helper function to get question by original_id and treatise_id
-async function getQuestionByOriginalId(originalId: number, treatiseId: number) {
-  const { data, error } = await supabase
-    .from('questions')
-    .select('*')
-    .eq('original_id', originalId)
-    .eq('treatise_id', treatiseId)
-    .single()
-  
-  if (error) throw error
-  return data
-}
-
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
-    
+    const convex = getConvexServerClient()
     // If no id, return all parts
     if (params.id == "all") {
-      const { data, error } = await supabase
-        .from('parts')
-        .select('*')
-        .order("id")
-      
-      if (error) throw error
+      const data = await convex.query(api.content.getAllParts, {})
       return NextResponse.json(data)
     }
 
@@ -67,64 +25,44 @@ export async function GET(
 
     // Case 1: Only partId - Get part and its treatises
     if (partId && !treatiseId) {
-      const part = await getPartByOriginalId(partId)
-      
-      const { data: treatises, error } = await supabase
-        .from('treatises')
-        .select('*')
-        .eq('part_id', part.id)
-        .order("original_id")
-      
-      if (error) throw error
-      return NextResponse.json({part:{ ...part, treatises }})
+      const partWithTreatises = await convex.query(
+        api.content.getPartWithTreatises,
+        { originalId: partId }
+      )
+      return NextResponse.json({ part: partWithTreatises })
     }
     
     // Case 2: partId and treatiseId - Get treatise and its questions
     if (partId && treatiseId && !questionId) {
-      const part = await getPartByOriginalId(partId)
-      const treatise = await getTreatiseByOriginalId(treatiseId, part.id)
-      
-      const { data: questions, error } = await supabase
-        .from('questions')
-        .select('*')
-        .eq('treatise_id', treatise.id)
-        .order("original_id")
-      
-      if (error) throw error
-      return NextResponse.json({treatise:{ ...treatise, questions, part }})
+      const treatiseWithQuestions = await convex.query(
+        api.content.getTreatiseWithQuestions,
+        { partOriginalId: partId, treatiseOriginalId: treatiseId }
+      )
+      return NextResponse.json({ treatise: treatiseWithQuestions })
     }
 
     // Case 3: partId, treatiseId, and questionId - Get question and its articles
     if (partId && treatiseId && questionId && !articleId) {
-      const part = await getPartByOriginalId(partId)
-      const treatise = await getTreatiseByOriginalId(treatiseId, part.id)
-      const question = await getQuestionByOriginalId(questionId, treatise.id)
-      
-      const { data: articles, error } = await supabase
-        .from('articles')
-        .select('*')
-        .eq('question_id', question.id)
-        .order("original_id")
-      
-      if (error) throw error
-      return NextResponse.json({question:{ ...question, articles, treatise, part }})
+      const questionWithArticles = await convex.query(
+        api.content.getQuestionWithArticles,
+        {
+          partOriginalId: partId,
+          treatiseOriginalId: treatiseId,
+          questionOriginalId: questionId,
+        }
+      )
+      return NextResponse.json({ question: questionWithArticles })
     }
 
     // Case 4: partId, treatiseId, questionId, and articleId - Get specific article
     if (partId && treatiseId && questionId && articleId) {
-      const part = await getPartByOriginalId(partId)
-      const treatise = await getTreatiseByOriginalId(treatiseId, part.id)
-      const question = await getQuestionByOriginalId(questionId, treatise.id)
-      
-      const { data: article, error } = await supabase
-        .from('articles')
-        .select('*')
-        .eq('original_id', articleId)
-        .eq('question_id', question.id)
-        .single()
-      
-      if (error) throw error
-      return NextResponse.json({article:{ ...article, question, treatise, part }})
+      const article = await convex.query(api.content.getArticleFull, {
+        partOriginalId: partId,
+        treatiseOriginalId: treatiseId,
+        questionOriginalId: questionId,
+        articleOriginalId: articleId,
+      })
+      return NextResponse.json({ article })
     }
 
     throw new Error('Invalid ID format')

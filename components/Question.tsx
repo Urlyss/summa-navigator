@@ -1,10 +1,10 @@
-import { Database } from "@/types/database.types"
+import type { Doc } from "../convex/_generated/dataModel"
 import CustomLink from "./CustomLink"
 
-type QuestionProps = Database['public']['Tables']['questions']['Row'] & {
-  articles: Database['public']['Tables']['articles']['Row'][]
-  part: Database['public']['Tables']['parts']['Row']
-  treatise: Database['public']['Tables']['treatises']['Row']
+type QuestionProps = Doc<'questions'> & {
+  articles: Doc<'articles'>[]
+  part: Doc<'parts'>
+  treatise: Doc<'treatises'>
 }
 
 export function Question({ part,treatise,original_id, title, description, articles }: QuestionProps) {
@@ -24,9 +24,9 @@ export function Question({ part,treatise,original_id, title, description, articl
       <h3 className="text-xl font-semibold mb-2">Articles</h3>
       <ul className="space-y-2">
         {articles.map((article) => (
-          <li key={article.id}>
+          <li key={article._id}>
             <CustomLink
-              title={article.title[0]}
+              title={article.title}
               href={`/explore/Pt${part.original_id}-Tr${treatise.original_id}-Qu${original_id}-Ar${article.original_id}`}
             />
           </li>

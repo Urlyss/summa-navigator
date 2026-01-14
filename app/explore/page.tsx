@@ -4,7 +4,7 @@ import CustomLink from "@/components/CustomLink"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useContent } from "@/lib/hooks/useContent"
-import { Database } from "@/types/database.types"
+import type { Doc } from "../../convex/_generated/dataModel"
 
 export default function Home() {
   const { data, isLoading, error,refetch } = useContent("all")
@@ -33,7 +33,7 @@ export default function Home() {
     <div className="mt-28 lg:px-36">
       <h2 className="text-2xl font-semibold mb-4">Parts of Summa Theologica</h2>
       <ul className="space-y-2">
-        {data && Array.isArray(data) && data.map((part:Database['public']['Tables']['parts']['Row']) => (
+        {data && Array.isArray(data) && data.map((part: Doc<"parts">) => (
           <li key={part.id}>
             <CustomLink title={part.title} href={`/explore/Pt${part.original_id}`}/>
           </li>

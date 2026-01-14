@@ -32,7 +32,7 @@ export default function Navigation({ currentId }: NavigationProps) {
     part && { href: `/explore/Pt${part.original_id}`, label: part.title },
     treatise && { href: `/explore/Pt${part.original_id}-Tr${treatise.original_id}`, label: treatise.title || part.title },
     question && { href: `/explore/Pt${part.original_id}-Tr${treatise.original_id}-Qu${question.original_id}`, label: question.title },
-    article && { href: `/explore/Pt${part.original_id}-Tr${treatise.original_id}-Qu${question.original_id}-Ar${article.original_id}`, label: article.title[0] },
+    article && { href: `/explore/Pt${part.original_id}-Tr${treatise.original_id}-Qu${question.original_id}-Ar${article.original_id}`, label: article.title },
   ].filter(Boolean)
 
   return (

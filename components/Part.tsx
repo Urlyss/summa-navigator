@@ -1,8 +1,8 @@
-import { Database } from "@/types/database.types"
+import type { Doc } from "../convex/_generated/dataModel"
 import CustomLink from "./CustomLink"
 
-type PartProps = Database['public']['Tables']['parts']['Row'] & {
-  treatises: Database['public']['Tables']['treatises']['Row'][]
+type PartProps = Doc<"parts"> & {
+  treatises: Doc<"treatises">[]
 }
 
 export function Part({ title, treatises,original_id }: PartProps) {

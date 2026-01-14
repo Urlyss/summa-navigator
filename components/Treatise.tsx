@@ -1,9 +1,9 @@
-import { Database } from "@/types/database.types"
+import type { Doc } from "../convex/_generated/dataModel"
 import CustomLink from "./CustomLink"
 
-type TreatiseProps = Database['public']['Tables']['treatises']['Row'] & {
-  questions: Database['public']['Tables']['questions']['Row'][],
-  part: Database['public']['Tables']['parts']['Row']
+type TreatiseProps = Doc<"treatises"> & {
+  questions: Doc<"questions">[],
+  part: Doc<"parts">
 }
 
 export function Treatise({ title, questions,part,original_id }: TreatiseProps) {

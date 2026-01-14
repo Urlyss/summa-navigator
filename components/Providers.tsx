@@ -8,13 +8,22 @@ import {
   QueryClient,
   QueryClientProvider,
 } from '@tanstack/react-query'
+import { ConvexProvider, ConvexReactClient } from 'convex/react'
+
+const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL
+
+if (!convexUrl) {
+  throw new Error('Missing NEXT_PUBLIC_CONVEX_URL for Convex client')
+}
+
+const convex = new ConvexReactClient(convexUrl)
 
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: Infinity,
-        gcTime: Infinity
+        gcTime: Infinity,
       },
     },
   })
@@ -39,16 +48,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const queryClient = getQueryClient()
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="system"
-        enableSystem
-        disableTransitionOnChange
-      >
-        {children}
-        <Toaster richColors />
-      </ThemeProvider>
-    </QueryClientProvider>
+    <ConvexProvider client={convex}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster richColors />
+        </ThemeProvider>
+      </QueryClientProvider>
+    </ConvexProvider>
   )
 }
