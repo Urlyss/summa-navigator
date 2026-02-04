@@ -31,19 +31,9 @@ import {
   ReasoningTrigger,
 } from "@/components/ai-elements/reasoning";
 import { Loader } from "@/components/ai-elements/loader";
-import { useQuery } from "@tanstack/react-query";
 import { aiModes } from "@/ai_config";
 import { Suggestion, Suggestions } from "./ai-elements/suggestion";
-import { Button } from "./ui/button";
 
-const fetchModels = async () => {
-  const response = await fetch("/api/models");
-  if (!response.ok) {
-    throw new Error("Failed to fetch models");
-  }
-  const data = await response.json();
-  return data;
-};
 
 const ChatBot = ({
   initialMessages,
@@ -52,25 +42,8 @@ const ChatBot = ({
   initialMessages: UIMessage[];
   articleContext?: string;
 }) => {
-  const {
-    data: availableModels = [],
-    isLoading: isModelsLoading,
-    refetch: refetchModels,
-  } = useQuery({
-    queryKey: ["models"],
-    queryFn: fetchModels,
-    staleTime: 1000 * 60 * 60, // 1 hour
-    refetchOnWindowFocus: false,
-  });
-
-  // Default to first model or fallback to a safe default
-  const defaultModel =
-    availableModels.length > 0
-      ? availableModels[0].value
-      : "deepseek/deepseek-r1:free";
 
   const [input, setInput] = useState("");
-  const [model, setModel] = useState<string>(defaultModel);
   const [aiMode, setAiMode] = useState(aiModes[0].value);
   const suggestions = [
     "Explain this article to me.",
@@ -100,7 +73,7 @@ const ChatBot = ({
 
     sendMessage(
       { text: message.text },
-      { body: { aiMode, model, articleContext } }
+      { body: { aiMode, articleContext } }
     );
     setInput("");
   };
@@ -129,7 +102,7 @@ const ChatBot = ({
                                 <Action
                                   onClick={() =>
                                     regenerate({
-                                      body: { aiMode, model, articleContext },
+                                      body: { aiMode, articleContext },
                                     })
                                   }
                                   label="Retry"
@@ -194,56 +167,6 @@ const ChatBot = ({
           </PromptInputBody>
           <PromptInputToolbar>
             <PromptInputTools>
-              <PromptInputModelSelect
-                value={!isModelsLoading ? model : undefined}
-                disabled={isModelsLoading}
-                onValueChange={(value) => {
-                  setModel(value);
-                }}
-              >
-                <PromptInputModelSelectTrigger className="capitalize">
-                  <PromptInputModelSelectValue
-                    placeholder={
-                      isModelsLoading ? "Loading..." : "Select a model"
-                    }
-                  />
-                </PromptInputModelSelectTrigger>
-                <PromptInputModelSelectContent>
-                  {isModelsLoading ? (
-                    <PromptInputModelSelectItem
-                      value="loading"
-                      disabled
-                      className="text-xs"
-                    >
-                      Loading models...
-                    </PromptInputModelSelectItem>
-                  ) : (
-                    availableModels.map(
-                      (model: { label: string; value: string }) => (
-                        <PromptInputModelSelectItem
-                          key={model.value}
-                          value={model.value}
-                          className="capitalize"
-                        >
-                          {model.label}
-                        </PromptInputModelSelectItem>
-                      )
-                    )
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full mt-1 flex items-center gap-1 text-xs"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      refetchModels();
-                    }}
-                  >
-                    <RefreshCcwIcon className="h-3 w-3" />
-                    Refresh models
-                  </Button>
-                </PromptInputModelSelectContent>
-              </PromptInputModelSelect>
               <PromptInputModelSelect
                 onValueChange={(value) => {
                   setAiMode(value);

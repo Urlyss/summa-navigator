@@ -19,13 +19,13 @@ export async function POST(req: Request) {
     }
 
     try {
-        const {messages, model, aiMode, articleContext} = await req.json()
+        const {messages, aiMode, articleContext} = await req.json()
         
         if (!messages || !Array.isArray(messages)) {
             return new Response('Invalid message format', { status: 400 })
         }
 
-        const selectedModel = model || 'meta-llama/llama-3.3-70b-instruct:free'
+        const selectedModel = 'openrouter/free'
         const selectedSystem = systemMessages[aiMode as keyof typeof systemMessages || 'default']
         
         const result = streamText({
